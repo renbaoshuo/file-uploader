@@ -79,6 +79,7 @@ interface FileUploaderProps
   defaultValue?: FileWithPreview[]
   value?: FileWithPreview[]
   onValueChange?: (files: FileWithPreview[]) => void
+  onUpload?: (files: FileWithPreview[]) => Promise<void>
   maxFileCount?: number
   children?: React.ReactNode
   className?: string
@@ -187,6 +188,7 @@ const FileUploader = React.forwardRef<HTMLDivElement, FileUploaderProps>(
       defaultValue,
       value,
       onValueChange,
+      onUpload,
       accept,
       multiple,
       maxFileCount,
@@ -218,22 +220,25 @@ const FileUploader = React.forwardRef<HTMLDivElement, FileUploaderProps>(
     )
 
     const onDrop = React.useCallback(
-      (acceptedFiles: File[], rejectedFiles: FileRejection[]) => {
+      async (acceptedFiles: File[], rejectedFiles: FileRejection[]) => {
         const newFiles = acceptedFiles.map((file) =>
           Object.assign(file, {
             preview: URL.createObjectURL(file),
           })
         )
 
-        setFiles(files ? [...files, ...newFiles] : newFiles)
+        const updatedFiles = files ? [...files, ...newFiles] : newFiles
+        setFiles(updatedFiles)
 
         if (rejectedFiles.length > 0) {
           rejectedFiles.forEach(({ file }) => {
             toast.error(`File ${file.name} was rejected`)
           })
         }
+
+        await onUpload?.(updatedFiles)
       },
-      [files, setFiles]
+      [files, onUpload, setFiles]
     )
 
     React.useEffect(() => {
@@ -338,7 +343,7 @@ interface FileUploaderItemProps
 const FileUploaderItem = React.forwardRef<
   HTMLDivElement,
   FileUploaderItemProps
->(({ className, value, ...props }, ref) => {
+>(({ className, value, children, ...props }, ref) => {
   return (
     <Primitive.div
       ref={ref}
@@ -356,6 +361,7 @@ const FileUploaderItem = React.forwardRef<
               {formatBytes(value.size)}
             </p>
           </div>
+          {children}
         </div>
       </div>
       <FileUploaderItemRemove value={value} asChild>
@@ -409,11 +415,15 @@ interface FileUploaderItemProgressProps
 const FileUploaderItemProgress = React.forwardRef<
   HTMLDivElement,
   FileUploaderItemProgressProps
->(({ className, value, ...props }, ref) => (
-  <Primitive.div ref={ref} className={cn(className)} {...props}>
-    <Progress value={value} />
-  </Primitive.div>
-))
+>(({ className, value, ...props }, ref) => {
+  const { files } = useFileUploader()
+
+  return (
+    <Primitive.div ref={ref} className={cn(className)} asChild {...props}>
+      <Progress value={value} />
+    </Primitive.div>
+  )
+})
 FileUploaderItemProgress.displayName = "FileUploaderItemProgress"
 
 interface FileUploaderItemRemoveProps
