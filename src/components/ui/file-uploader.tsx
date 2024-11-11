@@ -29,6 +29,9 @@ interface FileUploaderContextValue {
   maxSize?: number
   maxFileCount?: number
   isDragActive?: boolean
+  isDragAccept?: boolean
+  isDragReject?: boolean
+  isFileDialogActive?: boolean
   disabled?: boolean
 }
 
@@ -44,6 +47,28 @@ function useFileUploader() {
   return context
 }
 
+interface FileUploaderDataState {
+  isDragActive?: boolean
+  isDragAccept?: boolean
+  isDragReject?: boolean
+  isFileDialogActive?: boolean
+}
+
+function useFileUploaderDataState({
+  isDragActive,
+  isDragAccept,
+  isDragReject,
+  isFileDialogActive,
+}: FileUploaderDataState) {
+  return React.useMemo(() => {
+    if (isDragActive) return "drag-active"
+    if (isDragAccept) return "drag-accept"
+    if (isDragReject) return "drag-reject"
+    if (isFileDialogActive) return "dialog-active"
+    return undefined
+  }, [isDragActive, isDragAccept, isDragReject, isFileDialogActive])
+}
+
 interface FileUploaderProps
   extends Omit<DropzoneProps, "maxFiles" | "children"> {
   value?: FileWithPreview[]
@@ -57,6 +82,9 @@ interface FileUploaderProps
 interface FileUploaderTriggerProps
   extends React.HTMLAttributes<HTMLDivElement> {
   isDragActive?: boolean
+  isDragAccept?: boolean
+  isDragReject?: boolean
+  isFileDialogActive?: boolean
   maxSize?: number
   maxFileCount?: number
   disabled?: boolean
@@ -70,20 +98,29 @@ const FileUploaderTrigger = React.forwardRef<
     getRootProps,
     getInputProps,
     isDragActive,
+    isDragAccept,
+    isDragReject,
+    isFileDialogActive,
     maxSize,
     maxFileCount,
     disabled,
   } = useFileUploader()
 
+  const dataState = useFileUploaderDataState({
+    isDragActive,
+    isDragAccept,
+    isDragReject,
+    isFileDialogActive,
+  })
+
   return (
     <div
       {...getRootProps()}
+      data-state={dataState}
+      data-disabled={disabled ? "" : undefined}
       ref={ref}
       className={cn(
-        "group relative grid h-52 w-full cursor-pointer place-items-center rounded-lg border-2 border-dashed border-muted-foreground/25 px-5 py-2.5 text-center transition hover:bg-muted/25",
-        "ring-offset-background focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2",
-        isDragActive && "border-muted-foreground/50",
-        disabled && "pointer-events-none opacity-60",
+        "group relative grid h-52 w-full cursor-pointer place-items-center rounded-lg border-2 border-dashed border-muted-foreground/25 px-5 py-2.5 text-center ring-offset-background transition hover:bg-muted/25 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 data-[disabled]:pointer-events-none data-[state=drag-active]:border-muted-foreground/50 data-[disabled]:opacity-50",
         className
       )}
       {...props}
@@ -196,7 +233,14 @@ const FileUploader = React.forwardRef<HTMLDivElement, FileUploaderProps>(
         multiple={maxFileCount ? maxFileCount > 1 : multiple}
         disabled={disabled}
       >
-        {({ getRootProps, getInputProps, isDragActive }) => (
+        {({
+          getRootProps,
+          getInputProps,
+          isDragActive,
+          isDragAccept,
+          isDragReject,
+          isFileDialogActive,
+        }) => (
           <FileUploaderContext.Provider
             value={{
               files,
@@ -206,6 +250,9 @@ const FileUploader = React.forwardRef<HTMLDivElement, FileUploaderProps>(
               getRootProps,
               getInputProps,
               isDragActive,
+              isDragAccept,
+              isDragReject,
+              isFileDialogActive,
               maxSize,
               maxFileCount,
             }}
@@ -222,20 +269,31 @@ const FileUploader = React.forwardRef<HTMLDivElement, FileUploaderProps>(
 FileUploader.displayName = "FileUploader"
 
 interface FileUploaderContentProps
-  extends React.HTMLAttributes<HTMLDivElement> {
-  isDragActive?: boolean
-}
+  extends React.HTMLAttributes<HTMLDivElement> {}
 
 const FileUploaderContent = React.forwardRef<
   HTMLDivElement,
   FileUploaderContentProps
->(({ className, isDragActive, ...props }, ref) => {
-  const { disabled } = useFileUploader()
+>(({ className, ...props }, ref) => {
+  const {
+    isDragActive,
+    isDragAccept,
+    isDragReject,
+    isFileDialogActive,
+    disabled,
+  } = useFileUploader()
+
+  const dataState = useFileUploaderDataState({
+    isDragActive,
+    isDragAccept,
+    isDragReject,
+    isFileDialogActive,
+  })
 
   return (
     <div
       ref={ref}
-      data-drag-active={isDragActive ? "" : undefined}
+      data-state={dataState}
       data-disabled={disabled ? "" : undefined}
       className={cn("flex flex-col gap-4", className)}
       {...props}
