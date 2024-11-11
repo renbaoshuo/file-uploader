@@ -34,6 +34,10 @@ interface FileUploaderContextValue {
   isDragReject?: boolean
   isFileDialogActive?: boolean
   disabled?: boolean
+  triggerId?: string
+  contentId?: string
+  labelId?: string
+  descriptionId?: string
 }
 
 const FileUploaderContext = React.createContext<
@@ -105,6 +109,10 @@ const FileUploaderTrigger = React.forwardRef<
     maxSize,
     maxFileCount,
     disabled,
+    triggerId,
+    contentId,
+    labelId,
+    descriptionId,
   } = useFileUploader()
 
   const dataState = useFileUploaderDataState({
@@ -120,13 +128,19 @@ const FileUploaderTrigger = React.forwardRef<
       data-state={dataState}
       data-disabled={disabled ? "" : undefined}
       ref={ref}
+      id={triggerId}
+      aria-controls={contentId}
+      aria-labelledby={labelId}
+      aria-describedby={descriptionId}
+      role="button"
+      tabIndex={disabled ? -1 : 0}
       className={cn(
         "group relative grid h-52 w-full cursor-pointer place-items-center rounded-lg border-2 border-dashed border-muted-foreground/25 px-5 py-2.5 text-center ring-offset-background transition hover:bg-muted/25 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 data-[disabled]:pointer-events-none data-[state=drag-active]:border-muted-foreground/50 data-[disabled]:opacity-50",
         className
       )}
       {...props}
     >
-      <input {...getInputProps()} />
+      <input {...getInputProps()} aria-labelledby={labelId} />
       {isDragActive ? (
         <div className="flex flex-col items-center justify-center gap-4 sm:px-5">
           <div className="rounded-full border border-dashed p-3">
@@ -135,7 +149,7 @@ const FileUploaderTrigger = React.forwardRef<
               aria-hidden="true"
             />
           </div>
-          <p className="font-medium text-muted-foreground">
+          <p id={labelId} className="font-medium text-muted-foreground">
             Drop the files here
           </p>
         </div>
@@ -148,10 +162,10 @@ const FileUploaderTrigger = React.forwardRef<
             />
           </div>
           <div className="flex flex-col gap-px">
-            <p className="font-medium text-muted-foreground">
+            <p id={labelId} className="font-medium text-muted-foreground">
               Drag {`'n'`} drop files here, or click to select files
             </p>
-            <p className="text-sm text-muted-foreground/70">
+            <p id={descriptionId} className="text-sm text-muted-foreground/70">
               You can upload
               {maxFileCount && maxFileCount > 1
                 ? ` ${maxFileCount === Infinity ? "multiple" : maxFileCount}
@@ -187,6 +201,12 @@ const FileUploader = React.forwardRef<HTMLDivElement, FileUploaderProps>(
       prop: value,
       onChange: onValueChange,
     })
+
+    const baseId = React.useId()
+    const triggerId = `${baseId}-trigger`
+    const contentId = `${baseId}-content`
+    const labelId = `${baseId}-label`
+    const descriptionId = `${baseId}-description`
 
     const removeFile = React.useCallback(
       (fileToRemove: FileWithPreview) => {
@@ -256,11 +276,16 @@ const FileUploader = React.forwardRef<HTMLDivElement, FileUploaderProps>(
               isFileDialogActive,
               maxSize,
               maxFileCount,
+              triggerId,
+              contentId,
+              labelId,
+              descriptionId,
             }}
           >
             <Primitive.div
               ref={ref}
               className={cn("flex flex-col gap-6", className)}
+              aria-disabled={disabled}
             >
               {children}
             </Primitive.div>
@@ -306,15 +331,12 @@ FileUploaderContent.displayName = "FileUploaderContent"
 interface FileUploaderItemProps
   extends React.ComponentPropsWithoutRef<typeof Primitive.div> {
   value: FileWithPreview
-  showRemoveButton?: boolean
 }
 
 const FileUploaderItem = React.forwardRef<
   HTMLDivElement,
   FileUploaderItemProps
->(({ className, value, showRemoveButton = true, ...props }, ref) => {
-  const { removeFile, disabled } = useFileUploader()
-
+>(({ className, value, ...props }, ref) => {
   return (
     <Primitive.div
       ref={ref}
@@ -322,7 +344,7 @@ const FileUploaderItem = React.forwardRef<
       {...props}
     >
       <div className="flex flex-1 gap-2.5">
-        <FileUploaderPreview value={value} />
+        <FileUploaderItemPreview value={value} />
         <div className="flex w-full flex-col gap-2">
           <div className="flex flex-col gap-px">
             <p className="line-clamp-1 text-sm font-medium text-foreground/80">
@@ -334,31 +356,25 @@ const FileUploaderItem = React.forwardRef<
           </div>
         </div>
       </div>
-      {showRemoveButton && !disabled && (
-        <Button
-          type="button"
-          variant="outline"
-          size="icon"
-          className="size-7"
-          onClick={() => removeFile(value)}
-        >
+      <FileUploaderItemRemove value={value} asChild>
+        <Button type="button" variant="outline" size="icon" className="size-7">
           <X className="size-4" aria-hidden="true" />
           <span className="sr-only">Remove file</span>
         </Button>
-      )}
+      </FileUploaderItemRemove>
     </Primitive.div>
   )
 })
 FileUploaderItem.displayName = "FileUploaderItem"
 
-interface FileUploaderPreviewProps
+interface FileUploaderItemPreviewProps
   extends React.ComponentPropsWithoutRef<typeof Primitive.div> {
   value: FileWithPreview
 }
 
-const FileUploaderPreview = React.forwardRef<
+const FileUploaderItemPreview = React.forwardRef<
   HTMLDivElement,
-  FileUploaderPreviewProps
+  FileUploaderItemPreviewProps
 >(({ className, value, ...props }, ref) => {
   if (value.preview && value.type.startsWith("image/")) {
     return (
@@ -381,29 +397,57 @@ const FileUploaderPreview = React.forwardRef<
     </Primitive.div>
   )
 })
-FileUploaderPreview.displayName = "FileUploaderPreview"
+FileUploaderItemPreview.displayName = "FileUploaderItemPreview"
 
-interface FileUploaderProgressProps
+interface FileUploaderItemProgressProps
   extends React.ComponentPropsWithoutRef<typeof Primitive.div> {
   value: number
 }
 
-const FileUploaderProgress = React.forwardRef<
+const FileUploaderItemProgress = React.forwardRef<
   HTMLDivElement,
-  FileUploaderProgressProps
+  FileUploaderItemProgressProps
 >(({ className, value, ...props }, ref) => (
   <Primitive.div ref={ref} className={cn(className)} {...props}>
     <Progress value={value} />
   </Primitive.div>
 ))
-FileUploaderProgress.displayName = "FileUploaderProgress"
+FileUploaderItemProgress.displayName = "FileUploaderItemProgress"
+
+interface FileUploaderItemRemoveProps
+  extends Omit<
+    React.ComponentPropsWithoutRef<typeof Primitive.button>,
+    "value"
+  > {
+  value: FileWithPreview
+}
+
+const FileUploaderItemRemove = React.forwardRef<
+  HTMLButtonElement,
+  FileUploaderItemRemoveProps
+>(({ value, className, ...props }, ref) => {
+  const { removeFile, disabled } = useFileUploader()
+
+  return (
+    <Primitive.button
+      ref={ref}
+      type="button"
+      className={cn(className)}
+      onClick={() => removeFile(value)}
+      disabled={disabled}
+      {...props}
+    />
+  )
+})
+FileUploaderItemRemove.displayName = "FileUploaderItemRemove"
 
 export {
   FileUploader,
   FileUploaderContent,
   FileUploaderItem,
-  FileUploaderPreview,
-  FileUploaderProgress,
+  FileUploaderItemPreview,
+  FileUploaderItemProgress,
+  FileUploaderItemRemove,
   FileUploaderTrigger,
   type FileWithPreview,
 }

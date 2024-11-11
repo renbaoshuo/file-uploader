@@ -6,7 +6,7 @@ import {
   FileUploader,
   FileUploaderContent,
   FileUploaderItem,
-  FileUploaderProgress,
+  FileUploaderItemProgress,
   FileUploaderTrigger,
 } from "@/components/ui/file-uploader"
 
@@ -28,7 +28,7 @@ export function FileUploaderPrimitiveDemo() {
       <FileUploaderContent>
         {files.map((file) => (
           <FileUploaderItem key={file.name} value={file}>
-            <FileUploaderProgress value={progress[file.name] ?? 0} />
+            <FileUploaderItemProgress value={progress[file.name] ?? 0} />
           </FileUploaderItem>
         ))}
       </FileUploaderContent>
