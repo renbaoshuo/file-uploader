@@ -2,6 +2,7 @@
 
 import * as React from "react"
 import Image from "next/image"
+import { Primitive } from "@radix-ui/react-primitive"
 import { FileText, Upload, X } from "lucide-react"
 import Dropzone, {
   type DropzoneInputProps,
@@ -80,7 +81,7 @@ interface FileUploaderProps
 }
 
 interface FileUploaderTriggerProps
-  extends React.HTMLAttributes<HTMLDivElement> {
+  extends React.ComponentPropsWithoutRef<typeof Primitive.div> {
   isDragActive?: boolean
   isDragAccept?: boolean
   isDragReject?: boolean
@@ -114,7 +115,7 @@ const FileUploaderTrigger = React.forwardRef<
   })
 
   return (
-    <div
+    <Primitive.div
       {...getRootProps()}
       data-state={dataState}
       data-disabled={disabled ? "" : undefined}
@@ -160,7 +161,7 @@ const FileUploaderTrigger = React.forwardRef<
           </div>
         </div>
       )}
-    </div>
+    </Primitive.div>
   )
 })
 FileUploaderTrigger.displayName = "FileUploaderTrigger"
@@ -168,7 +169,6 @@ FileUploaderTrigger.displayName = "FileUploaderTrigger"
 const FileUploader = React.forwardRef<HTMLDivElement, FileUploaderProps>(
   (
     {
-      className,
       value,
       onValueChange,
       accept,
@@ -177,6 +177,7 @@ const FileUploader = React.forwardRef<HTMLDivElement, FileUploaderProps>(
       maxSize,
       disabled,
       children,
+      className,
       ...props
     },
     ref
@@ -257,9 +258,12 @@ const FileUploader = React.forwardRef<HTMLDivElement, FileUploaderProps>(
               maxFileCount,
             }}
           >
-            <div ref={ref} className="flex flex-col gap-6">
+            <Primitive.div
+              ref={ref}
+              className={cn("flex flex-col gap-6", className)}
+            >
               {children}
-            </div>
+            </Primitive.div>
           </FileUploaderContext.Provider>
         )}
       </Dropzone>
@@ -268,12 +272,9 @@ const FileUploader = React.forwardRef<HTMLDivElement, FileUploaderProps>(
 )
 FileUploader.displayName = "FileUploader"
 
-interface FileUploaderContentProps
-  extends React.HTMLAttributes<HTMLDivElement> {}
-
 const FileUploaderContent = React.forwardRef<
   HTMLDivElement,
-  FileUploaderContentProps
+  React.ComponentPropsWithoutRef<typeof Primitive.div>
 >(({ className, ...props }, ref) => {
   const {
     isDragActive,
@@ -291,7 +292,7 @@ const FileUploaderContent = React.forwardRef<
   })
 
   return (
-    <div
+    <Primitive.div
       ref={ref}
       data-state={dataState}
       data-disabled={disabled ? "" : undefined}
@@ -302,7 +303,8 @@ const FileUploaderContent = React.forwardRef<
 })
 FileUploaderContent.displayName = "FileUploaderContent"
 
-interface FileUploaderItemProps extends React.HTMLAttributes<HTMLDivElement> {
+interface FileUploaderItemProps
+  extends React.ComponentPropsWithoutRef<typeof Primitive.div> {
   value: FileWithPreview
   showRemoveButton?: boolean
 }
@@ -314,7 +316,7 @@ const FileUploaderItem = React.forwardRef<
   const { removeFile, disabled } = useFileUploader()
 
   return (
-    <div
+    <Primitive.div
       ref={ref}
       className={cn("relative flex items-center gap-2.5", className)}
       {...props}
@@ -344,13 +346,13 @@ const FileUploaderItem = React.forwardRef<
           <span className="sr-only">Remove file</span>
         </Button>
       )}
-    </div>
+    </Primitive.div>
   )
 })
 FileUploaderItem.displayName = "FileUploaderItem"
 
 interface FileUploaderPreviewProps
-  extends React.HTMLAttributes<HTMLDivElement> {
+  extends React.ComponentPropsWithoutRef<typeof Primitive.div> {
   value: FileWithPreview
 }
 
@@ -360,7 +362,7 @@ const FileUploaderPreview = React.forwardRef<
 >(({ className, value, ...props }, ref) => {
   if (value.preview && value.type.startsWith("image/")) {
     return (
-      <div ref={ref} className={cn("relative", className)} {...props}>
+      <Primitive.div ref={ref} className={cn("relative", className)} {...props}>
         <Image
           src={value.preview}
           alt={value.name}
@@ -369,20 +371,20 @@ const FileUploaderPreview = React.forwardRef<
           loading="lazy"
           className="aspect-square shrink-0 rounded-md object-cover"
         />
-      </div>
+      </Primitive.div>
     )
   }
 
   return (
-    <div ref={ref} className={cn("relative", className)} {...props}>
+    <Primitive.div ref={ref} className={cn("relative", className)} {...props}>
       <FileText className="size-10 text-muted-foreground" aria-hidden="true" />
-    </div>
+    </Primitive.div>
   )
 })
 FileUploaderPreview.displayName = "FileUploaderPreview"
 
 interface FileUploaderProgressProps
-  extends React.HTMLAttributes<HTMLDivElement> {
+  extends React.ComponentPropsWithoutRef<typeof Primitive.div> {
   value: number
 }
 
@@ -390,9 +392,9 @@ const FileUploaderProgress = React.forwardRef<
   HTMLDivElement,
   FileUploaderProgressProps
 >(({ className, value, ...props }, ref) => (
-  <div ref={ref} className={cn("w-full", className)} {...props}>
+  <Primitive.div ref={ref} className={cn(className)} {...props}>
     <Progress value={value} />
-  </div>
+  </Primitive.div>
 ))
 FileUploaderProgress.displayName = "FileUploaderProgress"
 
