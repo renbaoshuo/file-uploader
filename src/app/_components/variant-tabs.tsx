@@ -2,6 +2,7 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
 
 import { BasicUploaderDemo } from "./basic-uploader-demo"
 import { DialogUploaderDemo } from "./dialog-uploader-demo"
+import { FileUploaderPrimitiveDemo } from "./file-uploader-primitive-demo"
 import { ReactHookFormDemo } from "./react-hook-form-demo"
 
 export function VariantTabs() {
@@ -13,7 +14,8 @@ export function VariantTabs() {
         <TabsTrigger value="dialog">Dialog</TabsTrigger>
       </TabsList>
       <TabsContent value="basic" className="mt-6">
-        <BasicUploaderDemo />
+        {/* <BasicUploaderDemo /> */}
+        <FileUploaderPrimitiveDemo />
       </TabsContent>
       <TabsContent value="hook" className="mt-6">
         <ReactHookFormDemo />
