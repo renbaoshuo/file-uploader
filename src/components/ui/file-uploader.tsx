@@ -76,6 +76,7 @@ function useFileUploaderDataState({
 
 interface FileUploaderProps
   extends Omit<DropzoneProps, "maxFiles" | "children"> {
+  defaultValue?: FileWithPreview[]
   value?: FileWithPreview[]
   onValueChange?: (files: FileWithPreview[]) => void
   maxFileCount?: number
@@ -183,6 +184,7 @@ FileUploaderTrigger.displayName = "FileUploaderTrigger"
 const FileUploader = React.forwardRef<HTMLDivElement, FileUploaderProps>(
   (
     {
+      defaultValue,
       value,
       onValueChange,
       accept,
@@ -197,7 +199,7 @@ const FileUploader = React.forwardRef<HTMLDivElement, FileUploaderProps>(
     ref
   ) => {
     const [files = [], setFiles] = useControllableState({
-      defaultProp: [],
+      defaultProp: defaultValue,
       prop: value,
       onChange: onValueChange,
     })
